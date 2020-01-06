@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <title>Hello World!</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
+    <script src='https://api.mapbox.com/mapbox-gl-js/v1.4.1/mapbox-gl.js'></script>
+    <link href='https://api.mapbox.com/mapbox-gl-js/v1.4.1/mapbox-gl.css' rel='stylesheet' />
+    <link href='./index.css' rel='stylesheet' />
+</head>
+<!---->
+
+<body>
+    <div id='map'></div>
+    <script>
+        mapboxgl.accessToken = 'pk.eyJ1IjoiamFuZW54aWFvIiwiYSI6ImNrMmNheWdjdjF1OGIzY2xzM3pvMmsxaHMifQ.F6kdkX_HoyxvpWSd8wNhFQ';
+        var map = new mapboxgl.Map({
+            container: 'map', // container id
+            style: 'mapbox://styles/mapbox/streets-v11',
+            center: [-79.395, 43.660], // starting position
+            zoom: 13 // starting zoom
+        });
+
+        let carpoint_sourceData = {
+            "type": "FeatureCollection",
+            "features": [{
+                "type": "Feature",
+                "geometry": {
+                    "type": "Point",
+                    "coordinates": [-79.395, 43.660]    // initial car position
+                }
+            }]
+        }
+
+        map.on('load', function () {
+            // add layer to mark car position
+            map.addLayer({
+                'id': 'car-point',
+                'type': 'symbol',
+                'source': {
+                    'type': 'geojson',
+                    'data': carpoint_sourceData
+                },
+                'layout': {
+                    'icon-image': 'car-15',
+                    'icon-size': 2
+                }
+            });
+        });
+
+        // when car position info received from websocket
+        //carpoint_sourceData.features[0].geometry.coordinates = [-79.399, 43.660];
+        //map.getSource('car-point').setData(carpoint_sourceData);
+
+        // when gesture info received from websocket
+        let ipcRenderer = require('electron').ipcRenderer;
+
+        ipcRenderer.on('gesture', function (event, data) {
+            console.log('New data: ', data);
+            /* result --
+             1: swipe left (positive scale) or right (negative scale)
+             2: swipe up (positive scale) or down (negative scale) */
+            switch (data.result) {
+                case 1:
+                    map.panBy([data.scale * 100, 0]);
+                    break;
+                case 2:
+                    map.panBy([0, data.scale * 100]);
+                    break;
+                case 3:
+
+                    break;
+
+                default:
+                    //map.zoomIn(); map.zoomOut();
+                    //map.rotateTo(map.getBearing() + 20);
+                    ;
+            }
+        });
+        // Add zoom and rotation controls to the map.
+        //map.addControl(new mapboxgl.NavigationControl());
+    </script>
+</body>
+
+
+</html>

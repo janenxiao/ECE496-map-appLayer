@@ -1,0 +1,18 @@
+{
+  "name": "electronapp",
+  "version": "1.0.0",
+  "description": "An application layer for AWR1642 radar recognition project",
+  "main": "main.js",
+  "dependencies": {
+    "electron": "^6.0.11",
+    "ws": "^7.2.0"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "start": "electron .",
+    "debug": "electron --inspect-brk=5858 .",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC"
+}

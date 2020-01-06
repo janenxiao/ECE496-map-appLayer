@@ -1,0 +1,14 @@
+npm start		// start program
+node filename.js	// run js file
+curl 127.0.0.1:5000
+curl 149.248.4.73:5000/result/
+chrome://inspect/#devices	// debug with chrome devtools
+https://myoldserver.tk/users/sign_in	// cc's server
+
+todo:
+receive car position info from websocket in main, create event 'carpoint' in main.js
+upload repo to github, connect with analyzer
+
+guide:
+Geojson doc: https://tools.ietf.org/html/rfc7946
+Mapbox GL style #layers: https://docs.mapbox.com/mapbox-gl-js/style-spec/#layers
