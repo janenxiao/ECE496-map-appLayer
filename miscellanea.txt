@@ -4,6 +4,7 @@ curl 127.0.0.1:5000
 curl 149.248.4.73:5000/result/
 chrome://inspect/#devices	// debug with chrome devtools
 https://myoldserver.tk/users/sign_in	// cc's server (janenxiao W..22....)
+npm install
 python dependency:
 pip install websocket_client
 
@@ -15,6 +16,7 @@ Mapbox GL style #layers: https://docs.mapbox.com/mapbox-gl-js/style-spec/#layers
 Mapbox Tilequery API: https://docs.mapbox.com/playground/tilequery
 Create geojson: http://geojson.io
 Lnglat to xy coordinates: https://stackoverflow.com/questions/1369512/converting-longitude-latitude-to-x-y-on-a-map-with-calibration-points
+Install npm on ubuntu: https://tecadmin.net/install-latest-nodejs-npm-on-ubuntu
 
 git notes:
 remote
@@ -28,6 +30,7 @@ git status and git branch -a are helpful checkups;
 git reflog// show reference logs of the update history of local repo; 
 git reset --hard <version>// revert to a previous version and discard all local changes; 
 git add . // stage all files (new files and deleted files) in current and subdirectories; 
+git add -u // stage all tracked files, ignoring untracked files
 git add -A // stage all files (new files and deleted files) in current and subdirectories as well as higher directories that still belong to the same git repository; 
 git fetch // download new data from a remote repository - but doesn't integrate any of this new data into your working files, so safe operation; 
 git diff --name-only origin/develop // list files in your workspace that're different from remote develop branch; 

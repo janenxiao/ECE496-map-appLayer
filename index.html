@@ -24,7 +24,7 @@
     <div id='map'></div>
     <script>
         let ipcRenderer = require('electron').ipcRenderer;
-        let menuOn = true;
+        let menuOn = true, firstTimeMapOn = true;
         const menuXnum = 4;
         let menuwidth = 769, cellwidth = 191;
         let canvasheight;
@@ -175,6 +175,10 @@
                     canvas.style.display = "none";
                     document.getElementById('map').style.display = "block";
                     menuOn = false;
+                    if (firstTimeMapOn) {
+                        window.resizeTo(window.outerWidth - 1, window.outerHeight);
+                        firstTimeMapOn = false;
+                    }
                 }
             }
             else { // if map is on
