@@ -14,8 +14,8 @@ wsocketserver.on('connection', function connection(wsocket, request) {
     wsocket.on('message', function incoming(message) {
         console.log('received: %s', message);
         timeDiff = new Date() - startTime;
-        console.log(`timeDiff 2: ${timeDiff} ms`)
-        // wsocket.send('Hello, who are you');
+        console.log(`timeDiff: ${timeDiff} ms`)
+        wsocket.send(message);
     });
 
     // setTimeout(function () {

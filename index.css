@@ -1,2 +1,35 @@
-body { margin:0; padding:0; }
-#map { position:absolute; top:0; bottom:0; width:100%; }
+body { 
+    margin:0; 
+    padding:0; 
+}
+
+#canvas {
+    position:absolute;
+    top:0; 
+    bottom:0;
+}
+
+#map { 
+    display: none;
+    position:absolute;
+    top:0; 
+    bottom:0; 
+    width:100%; 
+}
+
+#menu { 
+    margin: 0;
+    padding: 0;
+    overflow: auto;
+    width: 769px;
+    border-style: solid;
+}
+
+.menu-cell { 
+    float: left;
+    width: 191px;
+    height: 150px;
+    line-height: 150px;
+    border-style: dotted;
+    text-align: center;
+}

@@ -21,7 +21,7 @@ function createWindow() {
   mainWindow.loadFile('index.html')
 
   // Open the DevTools.
-  // mainWindow.webContents.openDevTools()
+  mainWindow.webContents.openDevTools()
 
   // Emitted when the window is closed.
   mainWindow.on('closed', function () {
@@ -104,11 +104,12 @@ function openWebSocket() {
     console.log('socket server listening');
   });
   wsocketserver.on('connection', function connection(wsocket, request) {
+    console.log('size:', mainWindow.getSize());
+    console.log('bounds:', mainWindow.getBounds());
     startTime = new Date();
     wsocket.on('message', function incoming(message) {
       console.log('received: %s', message);
-      timeDiff = new Date() - startTime;
-      console.log(`timeDiff 2: ${timeDiff} ms`)
+      console.log(`timeDiff: ${new Date() - startTime} ms`)
       // wsocket.send('Hello, who are you');
 
       const data = JSON.parse(message);

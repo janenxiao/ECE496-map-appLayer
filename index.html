@@ -9,11 +9,69 @@
     <link href='https://api.mapbox.com/mapbox-gl-js/v1.4.1/mapbox-gl.css' rel='stylesheet' />
     <link href='./index.css' rel='stylesheet' />
 </head>
-<!---->
+<!--width="100%" height="100%"-->
 
 <body>
+    <canvas id="canvas"></canvas>
+    <div id='menu'>
+        <div class="menu-cell">me</div>
+        <div class="menu-cell">fa</div>
+        <div class="menu-cell">so</div>
+        <div class="menu-cell">me</div>
+        <div class="menu-cell">fa</div>
+        <div class="menu-cell">so</div>
+    </div>
     <div id='map'></div>
     <script>
+        let ipcRenderer = require('electron').ipcRenderer;
+        let menuOn = true;
+        const menuXnum = 4;
+        let menuwidth = 769, cellwidth = 191;
+        let canvasheight;
+        const xlen = 10, ylen = 10;
+
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        ctx.fillStyle = 'silver';
+
+        window.addEventListener('DOMContentLoaded', function () {
+            canvasheight = document.body.clientHeight;
+            canvas.width = menuwidth;
+            canvas.height = canvasheight;
+        });
+
+        window.onresize = function () {
+            // change menu cell width
+            menuwidth = document.body.clientWidth;
+            document.getElementById('menu').style.width = `${document.body.clientWidth}px`;
+            cellwidth = Math.floor(menuwidth / menuXnum) - 1;
+
+            const menuCells = document.getElementsByClassName('menu-cell');
+            for (i = 0; i < menuCells.length; i++) {
+                menuCells[i].style.width = `${cellwidth}px`;
+            }
+            // change canvas width and height
+            canvasheight = document.body.clientHeight;
+            canvas.width = menuwidth;
+            canvas.height = canvasheight;
+        };
+
+        // convert radar xy coordinates to canvas xy
+        function xyConvert(x, y) {
+            // only consider x in [-0.2, 0.2], y in [0.1, 0.3]
+            const x1 = -0.2, x2 = 0.2, y1 = 0.1, y2 = 0.3;
+            if (x >= x1 && x <= x2 && y >= y1 && y <= y2) {
+                x -= x1;
+                y -= y1;
+                x = Math.round(x / (x2 - x1) * menuwidth);
+                y = Math.round(y / (y2 - y1) * canvasheight);
+                return { x: x, y: y };
+            }
+            else
+                return null;
+        }
+
+
         mapboxgl.accessToken = 'pk.eyJ1IjoiamFuZW54aWFvIiwiYSI6ImNrMmNheWdjdjF1OGIzY2xzM3pvMmsxaHMifQ.F6kdkX_HoyxvpWSd8wNhFQ';
         var map = new mapboxgl.Map({
             container: 'map', // container id
@@ -22,7 +80,7 @@
             zoom: 13 // starting zoom
         });
 
-        let carpoint_sourceData = {
+        /*let carpoint_sourceData = {
             "type": "FeatureCollection",
             "features": [{
                 "type": "Feature",
@@ -47,36 +105,117 @@
                     'icon-size': 2
                 }
             });
-        });
+            // add layer to highlight car route
+            loadJSON('queens_park_crescent.json', function (routejson) {
+                map.addLayer({
+                    'id': 'car-route',
+                    'type': 'line',
+                    'source': {
+                        'type': 'geojson',
+                        'data': routejson
+                    },
+                    'layout': {
+                        'line-join': 'round',
+                        'line-cap': 'round'
+                    },
+                    'paint': {
+                        'line-color': '#ffa494',
+                        'line-width': 8
+                    }
+                });
+            });
+        });*/
+
+        // helper function to load json from file
+        function loadJSON(filepath, callback) {
+            var xreq = new XMLHttpRequest();
+            xreq.overrideMimeType("application/json");
+            xreq.open('GET', filepath, true);
+            xreq.onreadystatechange = function () {
+                if (xreq.readyState == 4 && xreq.status == "200") {
+                    callback(JSON.parse(xreq.responseText));
+                }
+            };
+            xreq.send();
+        }
 
         // when car position info received from websocket
         //carpoint_sourceData.features[0].geometry.coordinates = [-79.399, 43.660];
         //map.getSource('car-point').setData(carpoint_sourceData);
+        // when car route needs to be updated
+        // map.getSource('car-route').setData(new_routejson);
 
         // when gesture info received from websocket
-        let ipcRenderer = require('electron').ipcRenderer;
-
         ipcRenderer.on('gesture', function (event, data) {
             console.log('New data: ', data);
-            /* result --
-             1: swipe left (positive scale) or right (negative scale)
-             2: swipe up (positive scale) or down (negative scale) */
-            switch (data.result) {
-                case 1:
-                    map.panBy([data.scale * 100, 0]);
-                    break;
-                case 2:
-                    map.panBy([0, data.scale * 100]);
-                    break;
-                case 3:
+            if (menuOn) {
+                if (data.hasOwnProperty('x') && data.x != null) {
+                    ctx.clearRect(0, 0, canvas.width, canvas.height); // clear canvas
 
-                    break;
-
-                default:
-                    //map.zoomIn(); map.zoomOut();
-                    //map.rotateTo(map.getBearing() + 20);
-                    ;
+                    console.log('New handpoint: ', data.x, ',', data.y);
+                    ctx.strokeText(`(${data.x.toFixed(3)}, ${data.y.toFixed(3)})`, menuwidth - 100, canvasheight - 20, 100);
+                    xy = xyConvert(data.x, data.y);
+                    if (xy != null) {
+                        console.log('Canvas XY: ', xy.x, ',', xy.y);
+                        // if detected a click on menu
+                        if (data.hasOwnProperty('result') && data.result === 6) {
+                            ctx.fillStyle = 'blue';
+                            ctx.fillRect(xy.x - xlen / 2, xy.y - ylen / 2, xlen, ylen);
+                            ctx.fillStyle = 'silver';
+                        }
+                        else
+                            ctx.fillRect(xy.x - xlen / 2, xy.y - ylen / 2, xlen, ylen);
+                    }
+                    else
+                        console.log('Handpoint outside of boundary');
+                }
+                // toggle map on
+                if (data.hasOwnProperty('result') && data.result === 5) {
+                    document.getElementById('menu').style.display = "none";
+                    canvas.style.display = "none";
+                    document.getElementById('map').style.display = "block";
+                    menuOn = false;
+                }
             }
+            else { // if map is on
+                if (data.hasOwnProperty('result') && data.result != null) {
+                    /* result --
+                    1: swipe left (positive scale) or right (negative scale)
+                    2: swipe up (positive scale) or down (negative scale)
+                    3: zoom in
+                    4: zoom out
+                    5: toogle menu
+                    6: click on menu
+                    */
+                    switch (data.result) {
+                        case 1:
+                            map.panBy([data.scale * 100, 0]);
+                            break;
+                        case 2:
+                            map.panBy([0, data.scale * 100]);
+                            let curTime = new Date();
+                            console.log(`curTime seconds: ${curTime.getSeconds()}.${curTime.getUTCMilliseconds()}`)
+                            break;
+                        case 3:
+                            map.zoomIn();
+                            break;
+                        case 4:
+                            map.zoomOut();
+                            break;
+                        case 5: // toogle map off
+                            document.getElementById('menu').style.display = "block";
+                            canvas.style.display = "block";
+                            document.getElementById('map').style.display = "none";
+                            menuOn = true;
+                            break;
+
+                        default:
+                            //map.rotateTo(map.getBearing() + 20);
+                            ;
+                    }
+                }
+            }
+
         });
         // Add zoom and rotation controls to the map.
         //map.addControl(new mapboxgl.NavigationControl());
