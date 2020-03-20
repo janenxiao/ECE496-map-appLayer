@@ -14,21 +14,20 @@
 <body>
     <canvas id="canvas"></canvas>
     <div id='menu'>
-        <div class="menu-cell">me</div>
-        <div class="menu-cell">fa</div>
-        <div class="menu-cell">so</div>
-        <div class="menu-cell">me</div>
-        <div class="menu-cell">fa</div>
-        <div class="menu-cell">so</div>
+        <div class="menu-cell">00</div>
+        <div class="menu-cell">01</div>
     </div>
     <div id='map'></div>
     <script>
         let ipcRenderer = require('electron').ipcRenderer;
-        let menuOn = true, firstTimeMapOn = true;
-        const menuXnum = 4;
-        let menuwidth = 769, cellwidth = 191;
-        let canvasheight;
+        let menuOn = true;
+        //let firstTimeMapOn = true;
+        const menuXnum = 1, menuCellnum = 2;
+        const menuYnum = Math.ceil(menuCellnum / menuXnum);
+        let menuwidth = 769, cellwidth = 769; // cellwidth = 191 for menuXnum = 4
+        let canvasheight, cellheight = 100;
         const xlen = 10, ylen = 10;
+        let rHistory = 0;
 
         const canvas = document.getElementById('canvas');
         const ctx = canvas.getContext('2d');
@@ -42,13 +41,18 @@
 
         window.onresize = function () {
             // change menu cell width
-            menuwidth = document.body.clientWidth;
+            menuwidth = document.body.clientWidth - 5;
             document.getElementById('menu').style.width = `${document.body.clientWidth}px`;
             cellwidth = Math.floor(menuwidth / menuXnum) - 1;
+            // change menu cell height
+            cellheight = Math.floor(window.innerHeight / menuYnum) - 1;
+            if (cellheight > 150) cellheight = 150;
 
             const menuCells = document.getElementsByClassName('menu-cell');
             for (i = 0; i < menuCells.length; i++) {
                 menuCells[i].style.width = `${cellwidth}px`;
+                menuCells[i].style.height = `${cellheight}px`;
+                menuCells[i].style.lineHeight = `${cellheight}px`;
             }
             // change canvas width and height
             canvasheight = document.body.clientHeight;
@@ -58,17 +62,59 @@
 
         // convert radar xy coordinates to canvas xy
         function xyConvert(x, y) {
-            // only consider x in [-0.2, 0.2], y in [0.1, 0.3]
-            const x1 = -0.2, x2 = 0.2, y1 = 0.1, y2 = 0.3;
-            if (x >= x1 && x <= x2 && y >= y1 && y <= y2) {
-                x -= x1;
-                y -= y1;
-                x = Math.round(x / (x2 - x1) * menuwidth);
-                y = Math.round(y / (y2 - y1) * canvasheight);
-                return { x: x, y: y };
+            if (arguments.length == 2) {
+                // only consider x in [-0.2, 0.2], y in [0.1, 0.3]
+                const x1 = -0.2, x2 = 0.2, y1 = 0.1, y2 = 0.3;
+                if (x >= x1 && x <= x2 && y >= y1 && y <= y2) {
+                    x -= x1;
+                    y -= y1;
+                    x = Math.round(x / (x2 - x1) * menuwidth);
+                    y = Math.round(y / (y2 - y1) * canvasheight);
+                    return { x: x, y: y };
+                }
+                else
+                    return null;
             }
-            else
-                return null;
+            else if (arguments.length == 1) {
+                // x is range, only consider x in [0.1, 0.3]
+                const r1 = 0.1, r2 = 0.3;
+                const historyWeight = 0.8;
+                if (x >= r1 && x <= r2) {
+                    x -= r1;
+                    x = Math.round(x / (r2 - r1) * canvasheight);
+                    // refer to historical handpoints
+                    if (rHistory == 0)
+                        rHistory = x;
+                    rHistory = historyWeight * rHistory + (1 - historyWeight) * x;
+                    const mid = menuwidth / 2;
+                    return { x: mid, y: rHistory };
+                }
+                else
+                    return null;
+            }
+        }
+        const cell0 = function () {
+            map.setStyle('mapbox://styles/mapbox/streets-v11');
+            firstTimeMapOn = true; // map has been reset, hard resize to adjust map size again
+        };
+        const cell1 = function () {
+            map.setStyle('mapbox://styles/mapbox/satellite-streets-v11');
+            firstTimeMapOn = true;
+        };
+        const cell2 = function () { alert("cell 2") };
+        const cellFuncs = [cell0, cell1, cell2];
+
+        // determine which cell is clicked
+        function xyClickCell(x, y) {
+            cellxindex = Math.floor(x / cellwidth);
+            cellxindex = (cellxindex < menuXnum) ? cellxindex : menuXnum - 1; // if click is beyond max boundary, treat it as clicking on largest cell 
+            cellyindex = Math.floor(y / cellheight);
+            cellyindex = (cellyindex < menuYnum) ? cellyindex : menuYnum - 1;
+            console.log('Cell xindex: ', cellxindex, ', yindex: ', cellyindex);
+
+            index = menuXnum * cellyindex + cellxindex;
+            cellFuncs[index](); // call corresponding function
+            console.log('cell index: ' + index);
         }
 
 
@@ -145,16 +191,40 @@
         // when car route needs to be updated
         // map.getSource('car-route').setData(new_routejson);
 
+        function toggleMenuOff() {
+            document.getElementById('menu').style.display = "none";
+            canvas.style.display = "none";
+            document.getElementById('map').style.display = "block";
+            menuOn = false;
+            //if (firstTimeMapOn) { // hard resize window to adjust map size
+            window.resizeTo(window.outerWidth - 2, window.outerHeight);
+            //firstTimeMapOn = false;
+            //}
+        }
+
         // when gesture info received from websocket
         ipcRenderer.on('gesture', function (event, data) {
             console.log('New data: ', data);
             if (menuOn) {
-                if (data.hasOwnProperty('x') && data.x != null) {
+                // toggle map on
+                if (data.hasOwnProperty('result') && data.result === 5) {
+                    toggleMenuOff();
+                }
+                else if ((data.hasOwnProperty('r') && data.r != null) || (data.hasOwnProperty('x') && data.x != null)) {
                     ctx.clearRect(0, 0, canvas.width, canvas.height); // clear canvas
 
-                    console.log('New handpoint: ', data.x, ',', data.y);
-                    ctx.strokeText(`(${data.x.toFixed(3)}, ${data.y.toFixed(3)})`, menuwidth - 100, canvasheight - 20, 100);
-                    xy = xyConvert(data.x, data.y);
+                    let xy;
+                    if (data.hasOwnProperty('r') && data.r != null) {
+                        console.log('New handrange: ', data.r);
+                        ctx.strokeText(`r: ${data.r.toFixed(3)}`, menuwidth - 100, canvasheight - 20, 100);
+                        xy = xyConvert(data.r);
+                    }
+                    else { // input is xy coordinate
+                        console.log('New handpoint: ', data.x, ',', data.y);
+                        ctx.strokeText(`(${data.x.toFixed(3)}, ${data.y.toFixed(3)})`, menuwidth - 100, canvasheight - 20, 100);
+                        xy = xyConvert(data.x, data.y);
+                    }
+
                     if (xy != null) {
                         console.log('Canvas XY: ', xy.x, ',', xy.y);
                         // if detected a click on menu
@@ -162,6 +232,8 @@
                             ctx.fillStyle = 'blue';
                             ctx.fillRect(xy.x - xlen / 2, xy.y - ylen / 2, xlen, ylen);
                             ctx.fillStyle = 'silver';
+                            xyClickCell(xy.x, xy.y);
+                            toggleMenuOff();
                         }
                         else
                             ctx.fillRect(xy.x - xlen / 2, xy.y - ylen / 2, xlen, ylen);
@@ -169,17 +241,7 @@
                     else
                         console.log('Handpoint outside of boundary');
                 }
-                // toggle map on
-                if (data.hasOwnProperty('result') && data.result === 5) {
-                    document.getElementById('menu').style.display = "none";
-                    canvas.style.display = "none";
-                    document.getElementById('map').style.display = "block";
-                    menuOn = false;
-                    if (firstTimeMapOn) {
-                        window.resizeTo(window.outerWidth - 1, window.outerHeight);
-                        firstTimeMapOn = false;
-                    }
-                }
+
             }
             else { // if map is on
                 if (data.hasOwnProperty('result') && data.result != null) {
@@ -211,6 +273,8 @@
                             canvas.style.display = "block";
                             document.getElementById('map').style.display = "none";
                             menuOn = true;
+                            // hard resize window to reset canvas (otherwise it doesn't stoke for whatever reason)
+                            window.resizeTo(window.outerWidth + 2, window.outerHeight);
                             break;
 
                         default:

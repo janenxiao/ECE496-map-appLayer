@@ -2,6 +2,7 @@
 const { app, BrowserWindow, net } = require('electron')
 const path = require('path')
 const WebSocket = require('ws');
+var dgram = require('dgram');
 
 // Keep a global reference of the window object, if you don't, the window will
 // be closed automatically when the JavaScript object is garbage collected.
@@ -98,7 +99,27 @@ function periodicRequest() {
 // Open a websock server to receive gesture info from a local python analyzer program as client
 // data format: {'result': int, 'scale': int}
 function openWebSocket() {
-  const wsocketserver = new WebSocket.Server({ port: 8080 });
+  let udpserver = dgram.createSocket('udp4');
+  udpserver.on('error', (error) => {
+    log("udp_server", "error", error)
+    udpserver.close()
+  })
+
+  udpserver.on('listening', function () {
+    var address = udpserver.address();
+    console.log('UDP Server listening on ' + address.address + ':' + address.port);
+  });
+
+  udpserver.on('message', function (message, remote) {
+    console.log('From <' + remote.address + ':' + remote.port + '> received: ' + message);
+    const data = JSON.parse(message);
+    console.log(data);
+    mainWindow.webContents.send('gesture', data);
+  });
+
+  udpserver.bind(8080, '127.0.0.1');
+
+  /*const wsocketserver = new WebSocket.Server({ port: 8080 });
 
   wsocketserver.on('listening', function () {
     console.log('socket server listening');
@@ -122,5 +143,6 @@ function openWebSocket() {
       // }
 
     });
-  });
+  });*/
+
 }

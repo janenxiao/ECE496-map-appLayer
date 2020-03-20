@@ -3,7 +3,7 @@ import time
 import json
 
 # data = {'result': 2, 'scale': 2}
-data = {'result': 5, 'scale': 2, 'x': 0.1, 'y': 0.25}
+data = {'result': 6, 'scale': 2, 'x': None, 'y': None, 'r': 0.15}
 
 from websocket import create_connection
 ws = create_connection("ws://localhost:8080/gesture")

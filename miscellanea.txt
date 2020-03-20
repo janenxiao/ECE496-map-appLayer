@@ -4,7 +4,7 @@ curl 127.0.0.1:5000
 curl 149.248.4.73:5000/result/
 chrome://inspect/#devices	// debug with chrome devtools
 https://myoldserver.tk/users/sign_in	// cc's server (janenxiao W..22....)
-npm install
+npm install ws --save-dev
 python dependency:
 pip install websocket_client
 
@@ -17,6 +17,7 @@ Mapbox Tilequery API: https://docs.mapbox.com/playground/tilequery
 Create geojson: http://geojson.io
 Lnglat to xy coordinates: https://stackoverflow.com/questions/1369512/converting-longitude-latitude-to-x-y-on-a-map-with-calibration-points
 Install npm on ubuntu: https://tecadmin.net/install-latest-nodejs-npm-on-ubuntu
+Python GUI tool wxpython vs tkinter
 
 git notes:
 remote
