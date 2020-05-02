@@ -14,8 +14,8 @@
 <body>
     <canvas id="canvas"></canvas>
     <div id='menu'>
-        <div class="menu-cell">00</div>
-        <div class="menu-cell">01</div>
+        <div class="menu-cell">Normal view</div>
+        <div class="menu-cell">Satellite view</div>
     </div>
     <div id='map'></div>
     <script>
@@ -235,8 +235,12 @@
                             xyClickCell(xy.x, xy.y);
                             toggleMenuOff();
                         }
-                        else
+                        else {
                             ctx.fillRect(xy.x - xlen / 2, xy.y - ylen / 2, xlen, ylen);
+                            let curTime = new Date();
+                            console.log(`curTime seconds: ${curTime.getSeconds()}.${curTime.getUTCMilliseconds()}`)
+                        }
+
                     }
                     else
                         console.log('Handpoint outside of boundary');
