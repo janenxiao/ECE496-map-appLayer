@@ -6,10 +6,9 @@ chrome://inspect/#devices	// debug with chrome devtools
 https://myoldserver.tk/users/sign_in	// cc's server (janenxiao W..22....)
 npm install ws --save-dev
 python dependency:
-pip install websocket_client
+pip install websocket_client	// not really, currently using udpsocket
 
 todo:
-receive car position info from websocket in main, create event 'carpoint' in main.js
 
 guide:
 Mapbox GL style #layers: https://docs.mapbox.com/mapbox-gl-js/style-spec/#layers
