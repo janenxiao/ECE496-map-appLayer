@@ -4,7 +4,7 @@
   "description": "An application layer for AWR1642 radar recognition project",
   "main": "main.js",
   "dependencies": {
-    "electron": "^6.0.11",
+    "electron": "^7.2.4",
     "ws": "^7.2.0"
   },
   "devDependencies": {},
